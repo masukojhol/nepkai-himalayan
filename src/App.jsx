@@ -67,8 +67,20 @@ export default function App() {
   const [typing, setTyping] = useState(false);
   const [dd, setDd] = useState(null);
   const [search, setSearch] = useState("");
-  const [sidebar, setSidebar] = useState(true);
+  const [sidebar, setSidebar] = useState(window.innerWidth > 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const endRef = useRef(null);
+
+  // Handle window resize for responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (mobile && sidebar) setSidebar(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [sidebar]);
 
   const active = chats.find(c => c.id === activeId);
   const msgs = active?.msgs || [];
@@ -126,9 +138,32 @@ export default function App() {
       {/* Subtle mist at horizon */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,height:100,background:"linear-gradient(180deg, transparent, rgba(160,174,192,0.08))",zIndex:0,pointerEvents:"none"}}/>
 
+      {/* ═══ MOBILE OVERLAY ═══ */}
+      {isMobile && sidebar && (
+        <div onClick={()=>setSidebar(false)} style={{
+          position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",
+          backdropFilter:"blur(4px)",zIndex:90,
+        }}/>
+      )}
+
       {/* ═══ SIDEBAR ═══ */}
       {sidebar && (
-      <div style={{width:270,flexShrink:0,background:"rgba(26,32,44,0.9)",backdropFilter:"blur(20px)",display:"flex",flexDirection:"column",borderRight:"1px solid rgba(255,255,255,0.08)",zIndex:10,position:"relative"}}>
+      <div style={{
+        width: isMobile ? "100%" : 270,
+        maxWidth: isMobile ? "280px" : "none",
+        flexShrink:0,
+        background:"rgba(26,32,44,0.98)",
+        backdropFilter:"blur(20px)",
+        display:"flex",
+        flexDirection:"column",
+        borderRight:"1px solid rgba(255,255,255,0.08)",
+        zIndex: isMobile ? 100 : 10,
+        position: isMobile ? "fixed" : "relative",
+        left: 0,
+        top: 0,
+        bottom: 0,
+        boxShadow: isMobile ? "4px 0 20px rgba(0,0,0,0.5)" : "none",
+      }}>
 
         {/* Logo */}
         <div style={{padding:"16px 16px 12px",display:"flex",alignItems:"center",gap:10}}>
@@ -218,43 +253,49 @@ export default function App() {
 
         {/* ═══ TOP BAR — MODEL SELECTOR PROMINENT ═══ */}
         <div style={{
-          padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,
+          padding: isMobile ? "8px 12px" : "10px 16px",
+          display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,
           background:"rgba(26,32,44,0.7)",backdropFilter:"blur(12px)",
           borderBottom:"1px solid rgba(255,255,255,0.06)",gap:8,
+          flexWrap: isMobile ? "nowrap" : "nowrap",
         }}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap: isMobile ? 6 : 8, flex: isMobile ? 1 : "none", minWidth: 0}}>
             <button onClick={()=>setSidebar(!sidebar)} style={{
               width:34,height:34,borderRadius:10,border:"1px solid rgba(255,255,255,0.08)",
               background:"rgba(255,255,255,0.04)",cursor:"pointer",fontSize:14,color:"#718096",
-              display:"flex",alignItems:"center",justifyContent:"center",
+              display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
             }}>{sidebar?"◀":"☰"}</button>
 
             {/* ═══ MODEL SELECTOR — BIG & VISIBLE ═══ */}
             <div onClick={e=>{e.stopPropagation();setDd(dd==='model'?null:'model')}} style={{
-              padding:"7px 16px",borderRadius:12,cursor:"pointer",
+              padding: isMobile ? "6px 10px" : "7px 16px",
+              borderRadius:12,cursor:"pointer",
               background: dd==='model' ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
               border:`1px solid ${dd==='model' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)'}`,
-              display:"flex",alignItems:"center",gap:10,transition:"all 0.2s",
+              display:"flex",alignItems:"center",gap: isMobile ? 6 : 10,transition:"all 0.2s",
               boxShadow: dd==='model' ? "0 0 20px rgba(255,255,255,0.05)" : "none",
+              flex: isMobile ? 1 : "none",
+              minWidth: 0,
             }}
               onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.08)"}
               onMouseLeave={e=>e.currentTarget.style.background=dd==='model'?"rgba(255,255,255,0.1)":"rgba(255,255,255,0.05)"}
             >
               <div style={{
-                width:26,height:26,borderRadius:8,
+                width:26,height:26,borderRadius:8,flexShrink:0,
                 background:"linear-gradient(135deg, #4a5568, #718096)",
                 display:"flex",alignItems:"center",justifyContent:"center",
                 fontSize:13,color:"#ffffff",fontWeight:700,
                 boxShadow:"0 2px 8px rgba(0,0,0,0.3)",
               }}>{model.icon}</div>
-              <div>
-                <div style={{fontSize:13,fontWeight:600,color:"#ffffff",lineHeight:1.2}}>{model.name}</div>
-                <div style={{fontSize:10,color:"#718096"}}>{model.desc}</div>
+              <div style={{minWidth:0, overflow:"hidden"}}>
+                <div style={{fontSize: isMobile ? 12 : 13,fontWeight:600,color:"#ffffff",lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{model.name}</div>
+                {!isMobile && <div style={{fontSize:10,color:"#718096"}}>{model.desc}</div>}
               </div>
-              <svg width="10" height="6" style={{marginLeft:4,color:"#718096"}}><path d="M0 0 L5 6 L10 0" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg>
+              <svg width="10" height="6" style={{marginLeft:4,color:"#718096",flexShrink:0}}><path d="M0 0 L5 6 L10 0" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg>
             </div>
 
-            {/* Persona */}
+            {/* Persona - hidden on mobile */}
+            {!isMobile && (
             <div onClick={e=>{e.stopPropagation();setDd(dd==='persona'?null:'persona')}} style={{
               padding:"7px 12px",borderRadius:10,cursor:"pointer",
               background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
@@ -267,29 +308,39 @@ export default function App() {
               <span style={{fontSize:12,color:"#a0aec0"}}>{persona.name}</span>
               <svg width="8" height="5" style={{color:"#4a5568"}}><path d="M0 0 L4 5 L8 0" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg>
             </div>
+            )}
           </div>
 
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <div style={{display:"flex",gap: isMobile ? 4 : 8,alignItems:"center",flexShrink:0}}>
+            {!isMobile && (
             <button style={{
               padding:"7px 14px",borderRadius:10,border:"1px solid rgba(255,255,255,0.08)",
               background:"rgba(255,255,255,0.04)",cursor:"pointer",fontSize:11,fontWeight:500,
               color:"#718096",fontFamily:"inherit",
             }}>📖 Docs</button>
+            )}
             <button style={{
-              padding:"7px 16px",borderRadius:10,border:"none",
+              padding: isMobile ? "6px 10px" : "7px 16px",
+              borderRadius:10,border:"none",
               background:"linear-gradient(135deg, #4a5568, #2d3748)",
               boxShadow:"0 4px 14px rgba(0,0,0,0.3)",
               cursor:"pointer",fontSize:11,fontWeight:700,color:"#ffffff",fontFamily:"inherit",
-            }}>🏔 Upgrade</button>
+            }}>{isMobile ? "🏔" : "🏔 Upgrade"}</button>
           </div>
         </div>
 
         {/* ═══ MODEL DROPDOWN ═══ */}
         {dd==='model' && (
           <div onClick={e=>e.stopPropagation()} style={{
-            position:"absolute",top:56,left:sidebar?52:52,zIndex:100,
+            position:"absolute",
+            top: isMobile ? 54 : 56,
+            left: isMobile ? 12 : (sidebar ? 52 : 52),
+            right: isMobile ? 12 : "auto",
+            zIndex:100,
             background:"rgba(26,32,44,0.98)",backdropFilter:"blur(20px)",
-            borderRadius:16,padding:8,width:300,
+            borderRadius:16,padding:8,
+            width: isMobile ? "auto" : 300,
+            maxWidth: isMobile ? "calc(100vw - 24px)" : "none",
             border:"1px solid rgba(255,255,255,0.1)",
             boxShadow:"0 12px 40px rgba(0,0,0,0.5)",
           }}>
@@ -334,7 +385,7 @@ export default function App() {
         )}
 
         {/* ═══ PERSONA DROPDOWN ═══ */}
-        {dd==='persona' && (
+        {dd==='persona' && !isMobile && (
           <div onClick={e=>e.stopPropagation()} style={{
             position:"absolute",top:56,left:sidebar?310:250,zIndex:100,
             background:"rgba(26,32,44,0.98)",backdropFilter:"blur(20px)",
@@ -441,7 +492,8 @@ export default function App() {
                   filter:"blur(25px)",animation:"glow 3s ease-in-out infinite alternate",
                 }}/>
                 <h1 style={{
-                  fontSize:72,fontWeight:900,letterSpacing:-4,position:"relative",
+                  fontSize: isMobile ? 48 : 72,
+                  fontWeight:900,letterSpacing: isMobile ? -2 : -4,position:"relative",
                   background:"linear-gradient(135deg, #ffffff 0%, #e2e8f0 15%, #a0aec0 30%, #ffffff 45%, #718096 55%, #e2e8f0 70%, #ffffff 82%, #a0aec0 100%)",
                   backgroundSize:"300% 300%",
                   WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
@@ -450,14 +502,21 @@ export default function App() {
                   userSelect:"none",
                 }}>NEPKAI</h1>
               </div>
-              <p style={{fontSize:12,color:"#a0aec0",fontWeight:600,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Nepal ko AI</p>
-              <p style={{fontSize:15,color:"#718096",marginBottom:6}}>
+              <p style={{fontSize: isMobile ? 10 : 12,color:"#a0aec0",fontWeight:600,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Nepal ko AI</p>
+              <p style={{fontSize: isMobile ? 13 : 15,color:"#718096",marginBottom:6,textAlign:"center",padding:"0 16px"}}>
                 From the top of the world — <span style={{color:"#ffffff",fontFamily:"'Noto Sans Devanagari',sans-serif"}}>नेपालको आफ्नै AI</span>
               </p>
-              <p style={{fontSize:11,color:"#4a5568",marginBottom:36}}>Gemini · Claude · Groq · Codestral — smart routing picks the best</p>
+              <p style={{fontSize: isMobile ? 10 : 11,color:"#4a5568",marginBottom: isMobile ? 24 : 36,textAlign:"center",padding:"0 16px"}}>Gemini · Claude · Groq · Codestral — smart routing</p>
 
               {/* Suggestions */}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,maxWidth:520,width:"100%"}}>
+              <div style={{
+                display:"grid",
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(2,1fr)",
+                gap: isMobile ? 10 : 12,
+                maxWidth: isMobile ? "100%" : 520,
+                width:"100%",
+                padding: isMobile ? "0 16px" : 0,
+              }}>
                 {[
                   {icon:"📄",title:"निवेदन बनाउनुस्",desc:"Application letter PDF in 30 sec",q:"निवेदन बनाइदिनुस् — वडा कार्यालयमा",accent:"#38bdf8"},
                   {icon:"⌨",title:"Code with AI",desc:"Write, debug & deploy",q:"Build a REST API with Express.js and JWT",accent:"#60a5fa"},
@@ -466,24 +525,30 @@ export default function App() {
                 ].map((s,i)=>(
                   <div key={i} onClick={()=>{if(!activeId)newChat();setTimeout(()=>setInput(s.q),60)}}
                     style={{
-                      padding:"16px 15px",borderRadius:16,cursor:"pointer",textAlign:"left",
+                      padding: isMobile ? "14px 14px" : "16px 15px",
+                      borderRadius:16,cursor:"pointer",textAlign:"left",
                       background:"rgba(255,255,255,0.03)",
                       border:"1px solid rgba(255,255,255,0.06)",
                       transition:"all 0.25s",
+                      display: isMobile ? "flex" : "block",
+                      alignItems: "center",
+                      gap: isMobile ? 12 : 0,
                     }}
                     onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.06)";e.currentTarget.style.borderColor="rgba(255,255,255,0.12)";e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(0,0,0,0.3)"}}
                     onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.03)";e.currentTarget.style.borderColor="rgba(255,255,255,0.06)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none"}}
                   >
-                    <div style={{width:34,height:34,borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,marginBottom:10}}>{s.icon}</div>
-                    <div style={{fontSize:14,fontWeight:600,color:"#f7fafc",marginBottom:3}}>{s.title}</div>
-                    <div style={{fontSize:11,color:"#718096"}}>{s.desc}</div>
+                    <div style={{width:34,height:34,borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,marginBottom: isMobile ? 0 : 10,flexShrink:0}}>{s.icon}</div>
+                    <div>
+                      <div style={{fontSize: isMobile ? 13 : 14,fontWeight:600,color:"#f7fafc",marginBottom: isMobile ? 2 : 3}}>{s.title}</div>
+                      <div style={{fontSize:11,color:"#718096"}}>{s.desc}</div>
+                    </div>
                   </div>
                 ))}
               </div>
 
               {/* Feature Pills */}
-              <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center",marginTop:24}}>
-                {["📄 Documents","⌨ CLI","📚 Loksewa","📋 CV","🏠 Agreements","🔌 API"].map((p,i)=>(
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center",marginTop:24,padding: isMobile ? "0 16px" : 0}}>
+                {(isMobile ? ["📄 Docs","⌨ CLI","📚 Loksewa","📋 CV"] : ["📄 Documents","⌨ CLI","📚 Loksewa","📋 CV","🏠 Agreements","🔌 API"]).map((p,i)=>(
                   <div key={i} style={{
                     padding:"5px 13px",borderRadius:20,fontSize:11,color:"#718096",cursor:"pointer",fontWeight:500,
                     background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",transition:"all 0.2s",
@@ -495,7 +560,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div style={{maxWidth:700,margin:"0 auto",padding:"0 20px"}}>
+            <div style={{maxWidth:700,margin:"0 auto",padding: isMobile ? "0 12px" : "0 20px"}}>
               {msgs.map((m,i)=>(
                 <div key={i} style={{display:"flex",gap:12,marginBottom:20,flexDirection:m.role==="user"?"row-reverse":"row"}}>
                   {m.role==="ai"&&(
@@ -535,10 +600,10 @@ export default function App() {
         </div>
 
         {/* ═══ INPUT ═══ */}
-        <div style={{padding:"0 20px 18px",flexShrink:0}}>
+        <div style={{padding: isMobile ? "0 12px 14px" : "0 20px 18px",flexShrink:0}}>
           <div style={{maxWidth:700,margin:"0 auto"}}>
             <div style={{
-              display:"flex",alignItems:"flex-end",borderRadius:18,padding:4,
+              display:"flex",alignItems:"flex-end",borderRadius: isMobile ? 14 : 18,padding:4,
               background:"rgba(255,255,255,0.04)",
               border:"1px solid rgba(255,255,255,0.08)",
               boxShadow:"0 4px 20px rgba(0,0,0,0.2)",
@@ -549,18 +614,18 @@ export default function App() {
             >
               <textarea value={input} onChange={e=>setInput(e.target.value)}
                 onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}
-                rows={1} placeholder="NepkAI लाई सोध्नुहोस्... Ask anything... 🏔"
+                rows={1} placeholder={isMobile ? "Ask anything... 🏔" : "NepkAI लाई सोध्नुहोस्... Ask anything... 🏔"}
                 style={{
                   flex:1,background:"none",border:"none",outline:"none",
                   color:"#f7fafc",fontFamily:"Outfit, 'Noto Sans Devanagari', sans-serif",
-                  fontSize:15,lineHeight:1.5,padding:"10px 14px",resize:"none",minHeight:24,maxHeight:180,
+                  fontSize: isMobile ? 14 : 15,lineHeight:1.5,padding: isMobile ? "8px 12px" : "10px 14px",resize:"none",minHeight:24,maxHeight:180,
                 }}
               />
               <div style={{display:"flex",alignItems:"center",gap:4,padding:"4px 6px 4px 0"}}>
-                <button style={{width:34,height:34,borderRadius:10,border:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.04)",cursor:"pointer",fontSize:14,color:"#718096",display:"flex",alignItems:"center",justifyContent:"center"}}>📎</button>
-                <button style={{width:34,height:34,borderRadius:10,border:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.04)",cursor:"pointer",fontSize:14,color:"#718096",display:"flex",alignItems:"center",justifyContent:"center"}}>🎤</button>
+                {!isMobile && <button style={{width:34,height:34,borderRadius:10,border:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.04)",cursor:"pointer",fontSize:14,color:"#718096",display:"flex",alignItems:"center",justifyContent:"center"}}>📎</button>}
+                {!isMobile && <button style={{width:34,height:34,borderRadius:10,border:"1px solid rgba(255,255,255,0.06)",background:"rgba(255,255,255,0.04)",cursor:"pointer",fontSize:14,color:"#718096",display:"flex",alignItems:"center",justifyContent:"center"}}>🎤</button>}
                 <button onClick={send} style={{
-                  width:36,height:36,borderRadius:11,border:"none",
+                  width: isMobile ? 34 : 36,height: isMobile ? 34 : 36,borderRadius:11,border:"none",
                   background:input.trim()?"linear-gradient(135deg, #4a5568, #2d3748)":"rgba(255,255,255,0.06)",
                   boxShadow:input.trim()?"0 4px 14px rgba(0,0,0,0.3)":"none",
                   color:input.trim()?"#ffffff":"#4a5568",cursor:input.trim()?"pointer":"default",
@@ -568,14 +633,14 @@ export default function App() {
                 }}>↑</button>
               </div>
             </div>
-            <div style={{display:"flex",justifyContent:"center",gap:14,marginTop:8,fontSize:10,color:"#4a5568",alignItems:"center"}}>
-              <span>🏔 {model.name}</span>
-              <span>·</span>
+            <div style={{display:"flex",justifyContent:"center",gap: isMobile ? 8 : 14,marginTop:8,fontSize: isMobile ? 9 : 10,color:"#4a5568",alignItems:"center",flexWrap:"wrap"}}>
+              {!isMobile && <span>🏔 {model.name}</span>}
+              {!isMobile && <span>·</span>}
               <span>🔒 Encrypted</span>
               <span>·</span>
-              <span>💳 eSewa / Khalti</span>
+              <span>💳 eSewa</span>
               <span>·</span>
-              <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fmasukojhol.github.io%2Fnepkai-himalayan&count_bg=%23FFFFFF&title_bg=%232d3748&icon=&icon_color=%23FFFFFF&title=visitors&edge_flat=true" alt="visitors" style={{height:16,opacity:0.7}}/>
+              <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fmasukojhol.github.io%2Fnepkai-himalayan&count_bg=%23FFFFFF&title_bg=%232d3748&icon=&icon_color=%23FFFFFF&title=visitors&edge_flat=true" alt="visitors" style={{height: isMobile ? 14 : 16,opacity:0.7}}/>
             </div>
           </div>
         </div>
@@ -584,6 +649,9 @@ export default function App() {
       {/* ═══ ANIMATIONS ═══ */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        html,body,#root{height:100%;overflow:hidden}
+        body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
         @keyframes shine{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
         @keyframes glow{0%{opacity:.3;transform:translate(-50%,-50%) scale(.9)}100%{opacity:.8;transform:translate(-50%,-50%) scale(1.15)}}
         @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
@@ -594,6 +662,9 @@ export default function App() {
         *::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.2)}
         ::selection{background:rgba(255,255,255,0.15)}
         textarea::placeholder{color:#4a5568}
+        @media(max-width:768px){
+          .hide-mobile{display:none!important}
+        }
       `}</style>
     </div>
   );
