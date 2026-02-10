@@ -1,8 +1,9 @@
 {
   "name": "nepkai-himalayan",
+  "private": true,
   "version": "1.0.0",
+  "type": "module",
   "description": "NepkAI - Nepal's AI Chat Interface with Himalayan Theme",
-  "main": "App.jsx",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
