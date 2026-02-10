@@ -568,12 +568,14 @@ export default function App() {
                 }}>↑</button>
               </div>
             </div>
-            <div style={{display:"flex",justifyContent:"center",gap:14,marginTop:8,fontSize:10,color:"#475569"}}>
+            <div style={{display:"flex",justifyContent:"center",gap:14,marginTop:8,fontSize:10,color:"#475569",alignItems:"center"}}>
               <span>🏔 {model.name}</span>
               <span>·</span>
               <span>🔒 Encrypted</span>
               <span>·</span>
               <span>💳 eSewa / Khalti</span>
+              <span>·</span>
+              <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fmasukojhol.github.io%2Fnepkai-himalayan&count_bg=%23D4A017&title_bg=%230A1628&icon=&icon_color=%23E7E7E7&title=visitors&edge_flat=true" alt="visitors" style={{height:16,opacity:0.7}}/>
             </div>
           </div>
         </div>
